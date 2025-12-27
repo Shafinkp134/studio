@@ -1,0 +1,206 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { UploadCloud, CheckCircle2, AlertCircle } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { storage, db } from "@/lib/firebase";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import { formatBytes } from "@/lib/utils";
+
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
+interface FileUploadButtonProps {
+    storageUsed: number;
+    storageLimit: number;
+}
+
+export default function FileUploadButton({ storageUsed, storageLimit }: FileUploadButtonProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+    setError(null);
+    if (rejectedFiles.length > 0) {
+        if(rejectedFiles[0].errors[0].code === 'file-too-large') {
+            setError(`File is too large. Max size is ${formatBytes(MAX_FILE_SIZE)}.`);
+        } else {
+            setError(rejectedFiles[0].errors[0].message);
+        }
+        return;
+    }
+    
+    if (acceptedFiles.length > 0) {
+        const file = acceptedFiles[0];
+        if (storageUsed + file.size > storageLimit) {
+            setError("Not enough storage space.");
+            return;
+        }
+        setFileToUpload(file);
+    }
+  }, [storageLimit, storageUsed]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    maxSize: MAX_FILE_SIZE,
+    multiple: false,
+  });
+  
+  const handleUpload = () => {
+    if (!fileToUpload || !user) return;
+    
+    setUploading(true);
+    setError(null);
+
+    const storageRef = ref(storage, `files/${user.uid}/${Date.now()}_${fileToUpload.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
+
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setUploadProgress(progress);
+      },
+      (error) => {
+        console.error("Upload error:", error);
+        setError("Upload failed. Please try again.");
+        setUploading(false);
+        toast({
+            variant: "destructive",
+            title: "Upload Failed",
+            description: "There was an error uploading your file."
+        })
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        
+        // Add file metadata to Firestore
+        await addDoc(collection(db, "files"), {
+          ownerId: user.uid,
+          name: fileToUpload.name,
+          type: fileToUpload.type,
+          size: fileToUpload.size,
+          path: uploadTask.snapshot.ref.fullPath,
+          downloadURL,
+          createdAt: serverTimestamp(),
+        });
+        
+        // Update user's storage usage
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, {
+            storageUsed: storageUsed + fileToUpload.size
+        });
+
+        setUploading(false);
+        setIsOpen(false);
+        setFileToUpload(null);
+        setUploadProgress(0);
+        toast({
+            title: "Upload Complete",
+            description: `"${fileToUpload.name}" has been successfully uploaded.`,
+        });
+      }
+    );
+  };
+  
+  const resetState = () => {
+    setIsOpen(false);
+    // Add a small delay to allow dialog to close before resetting state
+    setTimeout(() => {
+        setFileToUpload(null);
+        setError(null);
+        setUploading(false);
+        setUploadProgress(0);
+    }, 300);
+  }
+
+  return (
+    <>
+      <Button onClick={() => setIsOpen(true)}>
+        <UploadCloud className="mr-2 h-4 w-4" />
+        Upload File
+      </Button>
+      <Dialog open={isOpen} onOpenChange={ (open) => { if(!open) resetState() } }>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Upload a File</DialogTitle>
+            <DialogDescription>
+              Drag and drop a file or click to select. Max file size: 100MB.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            {!fileToUpload && !uploading && (
+                <div
+                {...getRootProps()}
+                className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                    isDragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
+                }`}
+                >
+                <input {...getInputProps()} />
+                <UploadCloud className="h-10 w-10 text-muted-foreground mb-2"/>
+                <p className="text-sm text-muted-foreground">
+                    {isDragActive ? 'Drop the file here...' : 'Drag & drop a file, or click to select'}
+                </p>
+                </div>
+            )}
+
+            {fileToUpload && !uploading && (
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <span className="font-medium truncate text-sm">{fileToUpload.name}</span>
+                    <span className="text-sm text-muted-foreground ml-2">{formatBytes(fileToUpload.size)}</span>
+                </div>
+            )}
+            
+            {uploading && fileToUpload && (
+                <div className="space-y-2">
+                    <p className="text-sm font-medium">{`Uploading ${fileToUpload.name}...`}</p>
+                    <Progress value={uploadProgress} className="w-full" />
+                    <p className="text-sm text-muted-foreground text-right">{`${Math.round(uploadProgress)}%`}</p>
+                </div>
+            )}
+
+            {error && (
+                <div className="flex items-center gap-2 text-destructive text-sm mt-2 p-2 bg-destructive/10 rounded-md">
+                    <AlertCircle className="h-4 w-4"/>
+                    <span>{error}</span>
+                </div>
+            )}
+            
+            {!uploading && fileToUpload && (
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-500 text-sm mt-2 p-2 bg-green-500/10 rounded-md">
+                    <CheckCircle2 className="h-4 w-4"/>
+                    <span>File ready to upload.</span>
+                </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={resetState} disabled={uploading}>Cancel</Button>
+            <Button onClick={handleUpload} disabled={!fileToUpload || uploading}>
+              {uploading ? "Uploading..." : "Upload"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
