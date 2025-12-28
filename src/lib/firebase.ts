@@ -1,23 +1,16 @@
-// Important: Create a .env.local file in the root of your project and add your Firebase configuration:
-// NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-// NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
-// NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-// NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-// NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-// NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyAYk0O8yBnkX53YUM3tNaUtqMbBEm6MAaM",
+  authDomain: "pusshy-74dd5.firebaseapp.com",
+  projectId: "pusshy-74dd5",
+  storageBucket: "pusshy-74dd5.appspot.com",
+  messagingSenderId: "878254098469",
+  appId: "1:878254098469:web:8be4176a790d9b39e257cc",
+  measurementId: "G-SD2ZY2J0FM"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
