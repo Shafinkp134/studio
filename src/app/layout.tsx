@@ -5,8 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import Header from "@/components/header";
 
 export const metadata: Metadata = {
-  title: "CloudVault - Secure Cloud Storage",
-  description: "Secure cloud storage for your files.",
+  title: "Happy Christmas",
+  description: "Festive cloud storage for your files.",
 };
 
 export default function RootLayout({
