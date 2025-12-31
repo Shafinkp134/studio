@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -16,7 +17,7 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { User, UserData } from "@/types";
 import { useRouter } from "next/navigation";
 
@@ -50,7 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser({ ...firebaseUser, ...userData });
           } else {
             // New user, create user document in Firestore
-            const newUser: UserData = { storageUsed: 0 };
+            const newUser: UserData = { 
+              storageUsed: 0,
+              displayName: firebaseUser.displayName,
+              email: firebaseUser.email,
+              createdAt: serverTimestamp(),
+            };
             await setDoc(userRef, newUser);
             setUser({ ...firebaseUser, ...newUser });
           }

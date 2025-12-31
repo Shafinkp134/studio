@@ -14,6 +14,9 @@ export interface FileInfo {
 
 export interface UserData {
   storageUsed: number;
+  displayName?: string | null;
+  email?: string | null;
+  createdAt?: Timestamp;
 }
 
 export type User = FirebaseUser & UserData;
