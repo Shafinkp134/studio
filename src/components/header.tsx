@@ -31,7 +31,7 @@ export default function Header() {
         <Link href="/" className="flex items-center gap-2">
           <div className="relative">
             <Cloud className="h-8 w-8 text-primary" />
-            {isDecember && <SantaHat className="absolute -top-3 -right-3 h-6 w-6 transform rotate-[20deg]" />}
+            {isDecember && <SantaHat className="absolute -top-3.5 -right-2.5 h-6 w-6 transform rotate-[15deg]" />}
           </div>
           <span className="font-bold text-lg">CloudVault</span>
         </Link>
