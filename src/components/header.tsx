@@ -13,7 +13,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "./ui/button";
 import Link from "next/link";
-import SantaLogo from "./santa-logo";
 
 export default function Header() {
   const { user, signOut } = useAuth();
@@ -21,7 +20,9 @@ export default function Header() {
   return (
     <header className="bg-card border-b border-border">
       <div className="container flex h-16 items-center justify-between">
-        <SantaLogo />
+        <Link href="/" className="flex items-center gap-2">
+          <span className="font-bold text-lg">Happy Christmas</span>
+        </Link>
 
         {user && (
           <div className="flex items-center gap-4">
