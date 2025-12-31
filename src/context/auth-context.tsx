@@ -13,6 +13,8 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   GithubAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   User as FirebaseUser,
 } from "firebase/auth";
@@ -26,6 +28,8 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithGitHub: () => Promise<void>;
+  signUpWithEmail: (email: string, pass: string) => Promise<void>;
+  signInWithEmail: (email: string, pass: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -93,6 +97,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Error signing in with GitHub:", error);
     }
   };
+  
+  const signUpWithEmail = async (email: string, pass: string) => {
+    const creds = await createUserWithEmailAndPassword(auth, email, pass);
+    if(creds.user) {
+      router.push("/");
+    }
+  }
+
+  const signInWithEmail = async (email: string, pass: string) => {
+    const creds = await signInWithEmailAndPassword(auth, email, pass);
+    if(creds.user) {
+      router.push("/");
+    }
+  }
 
   const signOut = async () => {
     await firebaseSignOut(auth);
@@ -104,6 +122,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     signInWithGoogle,
     signInWithGitHub,
+    signUpWithEmail,
+    signInWithEmail,
     signOut,
   };
 

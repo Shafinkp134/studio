@@ -3,15 +3,15 @@ import { Cloud } from "lucide-react";
 
 export default function LoginPage() {
   return (
-    <div className="container relative flex h-full flex-col items-center justify-center">
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+    <div className="container relative flex min-h-full flex-col items-center justify-center py-12">
+      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
         <div className="flex flex-col space-y-2 text-center">
           <Cloud className="mx-auto h-12 w-12 text-primary" />
           <h1 className="text-2xl font-semibold tracking-tight">
             Welcome to CloudVault
           </h1>
           <p className="text-sm text-muted-foreground">
-            Sign in to access your secure cloud storage
+            Sign in or create an account to access your secure cloud storage
           </p>
         </div>
         <AuthForm />
