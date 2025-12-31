@@ -9,6 +9,7 @@ import StorageMeter from "./storage-meter";
 import FileList from "./file-list";
 import FileUploadButton from "./file-upload";
 import { Skeleton } from "./ui/skeleton";
+import UpgradePlans from "./upgrade-plans";
 
 const USER_STORAGE_LIMIT = 2 * 1024 * 1024 * 1024; // 2GB
 
@@ -101,6 +102,10 @@ export default function Dashboard() {
       ) : (
         <FileList files={files} />
       )}
+
+      <div className="mt-12">
+        <UpgradePlans />
+      </div>
     </div>
   );
 }
