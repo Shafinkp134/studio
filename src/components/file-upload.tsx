@@ -21,8 +21,8 @@ import { formatBytes } from "@/lib/utils";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
-const CLOUDINARY_CLOUD_NAME = "ddqzzqnjh";
-const CLOUDINARY_UPLOAD_PRESET = "ml_default";
+const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
 interface FileUploadButtonProps {
     storageUsed: number;
@@ -67,7 +67,10 @@ export default function FileUploadButton({ storageUsed, storageLimit }: FileUplo
   });
   
   const handleUpload = async () => {
-    if (!fileToUpload || !user) return;
+    if (!fileToUpload || !user || !CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+      setError("Cloudinary configuration is missing.");
+      return;
+    }
     
     setUploading(true);
     setError(null);
@@ -90,7 +93,6 @@ export default function FileUploadButton({ storageUsed, storageLimit }: FileUplo
       if (xhr.status >= 200 && xhr.status < 300) {
         const response = JSON.parse(xhr.responseText);
         
-        // Add file metadata to Firestore
         await addDoc(collection(db, "files"), {
           ownerId: user.uid,
           name: fileToUpload.name,
@@ -102,7 +104,6 @@ export default function FileUploadButton({ storageUsed, storageLimit }: FileUplo
           createdAt: serverTimestamp(),
         });
         
-        // Update user's storage usage
         const userDocRef = doc(db, 'users', user.uid);
         await updateDoc(userDocRef, {
             storageUsed: storageUsed + fileToUpload.size
@@ -144,7 +145,6 @@ export default function FileUploadButton({ storageUsed, storageLimit }: FileUplo
   
   const resetState = () => {
     setIsOpen(false);
-    // Add a small delay to allow dialog to close before resetting state
     setTimeout(() => {
         setFileToUpload(null);
         setError(null);
