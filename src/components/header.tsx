@@ -13,15 +13,26 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "./ui/button";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import SantaHat from "./santa-hat";
 
 export default function Header() {
   const { user, signOut } = useAuth();
+  const [isDecember, setIsDecember] = useState(false);
+
+  useEffect(() => {
+    const currentMonth = new Date().getMonth();
+    setIsDecember(currentMonth === 11);
+  }, []);
 
   return (
     <header className="bg-card border-b border-border">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Cloud className="h-6 w-6 text-primary" />
+          <div className="relative">
+            <Cloud className="h-8 w-8 text-primary" />
+            {isDecember && <SantaHat className="absolute -top-3 -right-3 h-6 w-6 transform rotate-[20deg]" />}
+          </div>
           <span className="font-bold text-lg">CloudVault</span>
         </Link>
 

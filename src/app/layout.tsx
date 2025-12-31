@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Header from "@/components/header";
 
 export const metadata: Metadata = {
-  title: "CloudVault",
+  title: "CloudVault - Secure Cloud Storage",
   description: "Secure cloud storage for your files.",
 };
 
