@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { Cloud, LogOut, User as UserIcon, Gem } from "lucide-react";
+import { LogOut, User as UserIcon, Gem } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,29 +13,16 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "./ui/button";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import SantaHat from "./santa-hat";
+import SantaLogo from "./santa-logo";
 
 export default function Header() {
   const { user, signOut } = useAuth();
-  const [isDecember, setIsDecember] = useState(false);
-
-  useEffect(() => {
-    const currentMonth = new Date().getMonth();
-    setIsDecember(currentMonth === 11);
-  }, []);
 
   return (
     <header className="bg-card border-b border-border">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Cloud className="h-8 w-8 text-primary" />
-          <span className="font-bold text-lg relative">
-            {isDecember && (
-              <SantaHat className="absolute -top-3.5 -left-1.5 h-6 w-6 transform -rotate-[15deg]" />
-            )}
-            CloudVault
-          </span>
+          <SantaLogo />
         </Link>
 
         {user && (
