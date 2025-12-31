@@ -31,9 +31,10 @@ import { FileInfo } from "@/types";
 import { formatBytes } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { ref, deleteObject } from "firebase/storage";
 import { doc, deleteDoc, updateDoc } from "firebase/firestore";
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
+import { deleteFile } from "@/actions/delete-file";
+
 
 interface FileListProps {
   files: FileInfo[];
@@ -55,13 +56,17 @@ export default function FileList({ files }: FileListProps) {
   const handleDelete = async (file: FileInfo) => {
     if (!user) return;
     
-    const fileRef = ref(storage, file.path);
     const fileDocRef = doc(db, "files", file.id);
     const userDocRef = doc(db, "users", user.uid);
 
     try {
-      await deleteObject(fileRef);
+      // Delete from Cloudinary
+      await deleteFile(file.cloudinaryPublicId, file.resourceType);
+
+      // Delete from Firestore
       await deleteDoc(fileDocRef);
+
+      // Update user storage
       const newStorageUsed = Math.max(0, (user.storageUsed || 0) - file.size);
       await updateDoc(userDocRef, { storageUsed: newStorageUsed });
 
@@ -113,7 +118,7 @@ export default function FileList({ files }: FileListProps) {
               </TableCell>
               <TableCell className="hidden md:table-cell text-right">{formatBytes(file.size)}</TableCell>
               <TableCell className="hidden md:table-cell text-right">
-                {new Date(file.createdAt.seconds * 1000).toLocaleDateString()}
+                {file.createdAt ? new Date(file.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
               </TableCell>
               <TableCell>
                 <DropdownMenu>

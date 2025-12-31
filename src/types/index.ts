@@ -6,10 +6,11 @@ export interface FileInfo {
   name: string;
   size: number;
   type: string;
-  path: string;
   downloadURL: string;
   ownerId: string;
   createdAt: Timestamp;
+  cloudinaryPublicId: string;
+  resourceType: 'image' | 'video' | 'raw';
 }
 
 export interface UserData {

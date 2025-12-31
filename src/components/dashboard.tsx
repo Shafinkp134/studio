@@ -32,7 +32,12 @@ export default function Dashboard() {
         userFiles.push({ id: doc.id, ...doc.data() } as FileInfo);
       });
       // Manually sort by createdAt client-side
-      userFiles.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
+      userFiles.sort((a, b) => {
+        if (a.createdAt && b.createdAt) {
+          return b.createdAt.seconds - a.createdAt.seconds;
+        }
+        return 0;
+      });
       setFiles(userFiles);
       setLoading(false);
     });

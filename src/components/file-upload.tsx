@@ -15,12 +15,14 @@ import { Progress } from "@/components/ui/progress";
 import { UploadCloud, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { storage, db } from "@/lib/firebase";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { formatBytes } from "@/lib/utils";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
+const CLOUDINARY_CLOUD_NAME = "ddqzzqnjh";
+const CLOUDINARY_UPLOAD_PRESET = "ml_default";
 
 interface FileUploadButtonProps {
     storageUsed: number;
@@ -64,33 +66,29 @@ export default function FileUploadButton({ storageUsed, storageLimit }: FileUplo
     multiple: false,
   });
   
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!fileToUpload || !user) return;
     
     setUploading(true);
     setError(null);
 
-    const storageRef = ref(storage, `files/${user.uid}/${Date.now()}_${fileToUpload.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
+    const formData = new FormData();
+    formData.append('file', fileToUpload);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, true);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const progress = (event.loaded / event.total) * 100;
         setUploadProgress(progress);
-      },
-      (error) => {
-        console.error("Upload error:", error);
-        setError("Upload failed. Please try again.");
-        setUploading(false);
-        toast({
-            variant: "destructive",
-            title: "Upload Failed",
-            description: "There was an error uploading your file."
-        })
-      },
-      async () => {
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+      }
+    };
+
+    xhr.onload = async () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const response = JSON.parse(xhr.responseText);
         
         // Add file metadata to Firestore
         await addDoc(collection(db, "files"), {
@@ -98,8 +96,9 @@ export default function FileUploadButton({ storageUsed, storageLimit }: FileUplo
           name: fileToUpload.name,
           type: fileToUpload.type,
           size: fileToUpload.size,
-          path: uploadTask.snapshot.ref.fullPath,
-          downloadURL,
+          cloudinaryPublicId: response.public_id,
+          resourceType: response.resource_type,
+          downloadURL: response.secure_url,
           createdAt: serverTimestamp(),
         });
         
@@ -117,8 +116,30 @@ export default function FileUploadButton({ storageUsed, storageLimit }: FileUplo
             title: "Upload Complete",
             description: `"${fileToUpload.name}" has been successfully uploaded.`,
         });
+      } else {
+        console.error("Upload error:", xhr.responseText);
+        setError("Upload failed. Please try again.");
+        setUploading(false);
+        toast({
+            variant: "destructive",
+            title: "Upload Failed",
+            description: "There was an error uploading your file."
+        })
       }
-    );
+    };
+
+    xhr.onerror = () => {
+      console.error("Upload error:", xhr.statusText);
+      setError("Upload failed. Please try again.");
+      setUploading(false);
+      toast({
+          variant: "destructive",
+          title: "Upload Failed",
+          description: "There was an error uploading your file."
+      })
+    };
+
+    xhr.send(formData);
   };
   
   const resetState = () => {
