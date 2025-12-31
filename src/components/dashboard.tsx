@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { db } from "@/lib/firebase";
-import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { FileInfo } from "@/types";
 import StorageMeter from "./storage-meter";
 import FileList from "./file-list";
@@ -23,8 +23,7 @@ export default function Dashboard() {
     setLoading(true);
     const q = query(
       collection(db, "files"),
-      where("ownerId", "==", user.uid),
-      orderBy("createdAt", "desc")
+      where("ownerId", "==", user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -32,6 +31,8 @@ export default function Dashboard() {
       querySnapshot.forEach((doc) => {
         userFiles.push({ id: doc.id, ...doc.data() } as FileInfo);
       });
+      // Manually sort by createdAt client-side
+      userFiles.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
       setFiles(userFiles);
       setLoading(false);
     });
