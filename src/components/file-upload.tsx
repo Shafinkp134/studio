@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { formatBytes } from "@/lib/utils";
+import Image from "next/image";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
@@ -34,6 +35,7 @@ export default function FileUploadButton({ storageUsed, storageLimit }: FileUplo
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { user } = useAuth();
@@ -57,8 +59,21 @@ export default function FileUploadButton({ storageUsed, storageLimit }: FileUplo
             return;
         }
         setFileToUpload(file);
+        if (file.type.startsWith("image/")) {
+            setPreview(URL.createObjectURL(file));
+        } else {
+            setPreview(null);
+        }
     }
   }, [storageLimit, storageUsed]);
+
+  useEffect(() => {
+    return () => {
+        if (preview) {
+            URL.revokeObjectURL(preview);
+        }
+    }
+  }, [preview]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -150,6 +165,10 @@ export default function FileUploadButton({ storageUsed, storageLimit }: FileUplo
         setError(null);
         setUploading(false);
         setUploadProgress(0);
+        if(preview) {
+            URL.revokeObjectURL(preview);
+            setPreview(null);
+        }
     }, 300);
   }
 
@@ -185,9 +204,16 @@ export default function FileUploadButton({ storageUsed, storageLimit }: FileUplo
             )}
 
             {fileToUpload && !uploading && (
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <span className="font-medium truncate text-sm">{fileToUpload.name}</span>
-                    <span className="text-sm text-muted-foreground ml-2">{formatBytes(fileToUpload.size)}</span>
+                 <div className="space-y-4">
+                    {preview && (
+                        <div className="relative w-full h-48 rounded-lg overflow-hidden border">
+                            <Image src={preview} alt="File preview" layout="fill" objectFit="contain" />
+                        </div>
+                    )}
+                    <div className="flex items-center justify-between p-2 border rounded-lg bg-muted/50">
+                        <span className="font-medium truncate text-sm">{fileToUpload.name}</span>
+                        <span className="text-sm text-muted-foreground ml-2">{formatBytes(fileToUpload.size)}</span>
+                    </div>
                 </div>
             )}
             
