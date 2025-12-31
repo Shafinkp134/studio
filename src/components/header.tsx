@@ -21,9 +21,7 @@ export default function Header() {
   return (
     <header className="bg-card border-b border-border">
       <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <SantaLogo />
-        </Link>
+        <SantaLogo />
 
         {user && (
           <div className="flex items-center gap-4">
