@@ -12,6 +12,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,8 @@ import {
   FileVideo,
   FileAudio,
   Archive,
-  FolderArchive
+  FolderArchive,
+  Share2
 } from "lucide-react";
 import { FileInfo } from "@/types";
 import { formatBytes } from "@/lib/utils";
@@ -52,6 +54,14 @@ const getFileIcon = (fileType: string) => {
 export default function FileList({ files }: FileListProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const handleShare = (file: FileInfo) => {
+    navigator.clipboard.writeText(file.downloadURL);
+    toast({
+      title: "Link Copied",
+      description: "The shareable link has been copied to your clipboard.",
+    });
+  };
 
   const handleDelete = async (file: FileInfo) => {
     if (!user) return;
@@ -130,11 +140,16 @@ export default function FileList({ files }: FileListProps) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <a href={file.downloadURL} target="_blank" rel="noopener noreferrer">
+                      <a href={file.downloadURL} target="_blank" rel="noopener noreferrer" download={file.name}>
                         <Download className="mr-2 h-4 w-4" />
                         <span>Download</span>
                       </a>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleShare(file)}>
+                      <Share2 className="mr-2 h-4 w-4" />
+                      <span>Share Link</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => handleDelete(file)} className="text-destructive focus:text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" />
                       <span>Delete</span>
