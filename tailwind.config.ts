@@ -70,10 +70,15 @@ export default {
             height: '0',
           },
         },
+        'sleigh-fly': {
+          '0%': { transform: 'translateX(0) translateY(20px) rotate(-5deg)' },
+          '100%': { transform: 'translateX(calc(100vw + 400px)) translateY(-50px) rotate(5deg)' },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'sleigh-fly': 'sleigh-fly 20s linear infinite',
       },
     },
   },
